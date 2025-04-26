@@ -143,7 +143,8 @@
               await updateDoc(doc(db, 'leaderboard', existingDoc.id), {
                 score: gameState.score,
                 timeElapsed: gameState.timeElapsed,
-                timestamp: new Date()
+                timestamp: new Date(),
+                username: $user.displayName || existingDoc.data().username || 'Anonymous'
               });
             }
           } else {

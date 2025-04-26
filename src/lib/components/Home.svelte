@@ -21,9 +21,12 @@
                 if (!querySnapshot.empty) {
                     const doc = querySnapshot.docs[0];
                     bestScore = doc.data().score;
+                } else {
+                    bestScore = null;
                 }
             } catch (error) {
                 console.error('Error fetching best score:', error);
+                bestScore = null;
             }
         }
         loading = false;
