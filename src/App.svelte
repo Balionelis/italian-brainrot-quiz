@@ -108,9 +108,10 @@
         margin: 0;
         padding: 0;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        background-color: #f8f9fa;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
         color: #2c3e50;
         line-height: 1.6;
+        min-height: 100vh;
     }
     
     :global(*) {
@@ -124,12 +125,14 @@
     }
     
     .modern-nav {
-        background: white;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
         padding: 12px 20px;
         position: sticky;
         top: 0;
         z-index: 100;
+        transition: all 0.3s ease;
     }
     
     .nav-content {
@@ -145,7 +148,7 @@
         align-items: center;
         gap: 10px;
         cursor: pointer;
-        transition: transform 0.2s ease;
+        transition: transform 0.3s ease;
     }
     
     .logo:hover {
@@ -154,12 +157,23 @@
     
     .logo-icon {
         font-size: 1.5rem;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
     }
     
     .logo-text {
         font-size: 1.25rem;
         font-weight: 700;
         color: #2c3e50;
+        background: linear-gradient(45deg, #4a90e2, #357abd);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
     
     .nav-links {
@@ -176,21 +190,40 @@
         font-weight: 500;
         cursor: pointer;
         border-radius: 8px;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .nav-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: 0.5s;
+    }
+    
+    .nav-button:hover::before {
+        left: 100%;
     }
     
     .nav-button:hover {
         background: #f3f4f6;
         color: #2c3e50;
+        transform: translateY(-2px);
     }
     
     .nav-button.primary {
-        background: #4a90e2;
+        background: linear-gradient(45deg, #4a90e2, #357abd);
         color: white;
     }
     
     .nav-button.primary:hover {
-        background: #357abd;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
     }
     
     .nav-button.secondary {
@@ -209,6 +242,12 @@
         padding: 4px 12px;
         background: #f3f4f6;
         border-radius: 25px;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
     }
     
     .user-name {
@@ -224,22 +263,35 @@
         border-radius: 6px;
         cursor: pointer;
         font-weight: 500;
-        transition: background 0.2s ease;
+        transition: all 0.3s ease;
     }
     
     .logout-button:hover {
         background: #c0392b;
+        transform: translateY(-1px);
     }
     
     .content {
         flex: 1;
         padding: 20px;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
     
     .switch-auth {
         text-align: center;
         margin-top: 20px;
         color: #4a5568;
+        animation: fadeInUp 0.5s ease;
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
     .link-button {
@@ -250,6 +302,7 @@
         cursor: pointer;
         padding: 0;
         font-weight: 500;
+        transition: color 0.3s ease;
     }
     
     .link-button:hover {
@@ -264,6 +317,14 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         max-width: 500px;
         margin: 40px auto;
+        animation: bounceIn 0.6s ease;
+    }
+    
+    @keyframes bounceIn {
+        0% { transform: scale(0.3); opacity: 0; }
+        50% { transform: scale(1.05); }
+        70% { transform: scale(0.9); }
+        100% { transform: scale(1); opacity: 1; }
     }
     
     .access-denied h2 {
@@ -278,19 +339,19 @@
     
     .access-denied .primary-button {
         padding: 12px 24px;
-        background: #4a90e2;
+        background: linear-gradient(45deg, #4a90e2, #357abd);
         color: white;
         border: none;
         border-radius: 8px;
         font-size: 1rem;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
     }
     
     .access-denied .primary-button:hover {
-        background: #357abd;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
     }
     
     .modern-footer {
@@ -298,6 +359,7 @@
         border-top: 1px solid #e5e7eb;
         padding: 20px;
         margin-top: auto;
+        animation: fadeIn 0.5s ease;
     }
     
     .footer-content {
@@ -322,4 +384,4 @@
             margin-top: 10px;
         }
     }
-  </style>
+</style>

@@ -277,6 +277,12 @@
         max-width: 800px;
         margin: 40px auto;
         padding: 0 20px;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
     
     .game-header {
@@ -294,8 +300,14 @@
     
     .progress {
         height: 100%;
-        background: #4a90e2;
-        transition: width 0.3s ease;
+        background: linear-gradient(90deg, #4a90e2, #357abd);
+        transition: width 0.5s ease;
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
     }
     
     .game-stats {
@@ -305,12 +317,23 @@
         padding: 16px;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        animation: slideUp 0.5s ease;
+    }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
     .stat {
         display: flex;
         flex-direction: column;
         align-items: center;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat:hover {
+        transform: scale(1.05);
     }
     
     .stat-label {
@@ -330,6 +353,12 @@
         border-radius: 16px;
         padding: 30px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        animation: fadeInScale 0.5s ease;
+    }
+    
+    @keyframes fadeInScale {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
     }
     
     h2 {
@@ -351,6 +380,17 @@
         object-fit: contain;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        animation: zoomIn 0.5s ease;
+        transition: transform 0.3s ease;
+    }
+    
+    .character-image img:hover {
+        transform: scale(1.05);
+    }
+    
+    @keyframes zoomIn {
+        from { opacity: 0; transform: scale(0.8); }
+        to { opacity: 1; transform: scale(1); }
     }
     
     .options-grid {
@@ -368,55 +408,87 @@
         font-size: 1rem;
         color: #2c3e50;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
         text-align: left;
+        animation: fadeInUp 0.5s ease;
+        transform-origin: center;
     }
     
     .option-button:hover:not(:disabled) {
         border-color: #4a90e2;
         transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
     }
     
     .option-button.selected {
         border-color: #4a90e2;
-        background: #e6f2ff;
+        background: linear-gradient(135deg, #e6f2ff, #f0f7ff);
+        animation: pulse 0.3s ease;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(0.98); }
+        100% { transform: scale(1); }
     }
     
     .option-button.correct {
         border-color: #2ecc71;
-        background: #d5f5e3;
+        background: linear-gradient(135deg, #d5f5e3, #e8faf1);
+        animation: correctAnswer 0.5s ease;
+    }
+    
+    @keyframes correctAnswer {
+        0% { transform: scale(1); }
+        30% { transform: scale(1.1); }
+        100% { transform: scale(1); }
     }
     
     .option-button.wrong {
         border-color: #e74c3c;
-        background: #fdecea;
+        background: linear-gradient(135deg, #fdecea, #ffe5e3);
+        animation: shake 0.5s ease;
     }
     
-    .option-button:disabled {
-        cursor: not-allowed;
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
     }
     
     .submit-button {
         width: 100%;
         padding: 16px;
-        background: #4a90e2;
+        background: linear-gradient(45deg, #4a90e2, #357abd);
         color: white;
         border: none;
         border-radius: 12px;
         font-size: 1.1rem;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .submit-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: 0.5s;
+    }
+    
+    .submit-button:hover:not(:disabled)::before {
+        left: 100%;
     }
     
     .submit-button:hover:not(:disabled) {
-        background: #357abd;
-        transform: translateY(-1px);
-    }
-    
-    .submit-button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
     }
     
     .feedback-message {
@@ -427,10 +499,16 @@
         font-weight: 600;
         background: #fee2e2;
         color: #dc2626;
+        animation: slideInFeedback 0.5s ease;
+    }
+    
+    @keyframes slideInFeedback {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
     .feedback-message.correct {
-        background: #d1fae5;
+        background: linear-gradient(135deg, #d1fae5, #c6f6d5);
         color: #059669;
     }
     
@@ -463,6 +541,14 @@
         padding: 40px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         text-align: center;
+        animation: bounceIn 0.8s ease;
+    }
+    
+    @keyframes bounceIn {
+        0% { transform: scale(0.3); opacity: 0; }
+        50% { transform: scale(1.05); }
+        70% { transform: scale(0.9); }
+        100% { transform: scale(1); opacity: 1; }
     }
     
     .game-over-card h2 {
@@ -482,41 +568,36 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-    }
-    
-    .score-label, .time-label {
-        font-size: 1rem;
-        color: #6b7280;
-        margin-bottom: 8px;
+        animation: fadeInUp 0.6s ease;
     }
     
     .score-value {
         font-size: 2.5rem;
         font-weight: 700;
         color: #4a90e2;
+        animation: countUp 1s ease;
     }
     
-    .time-value {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #2c3e50;
+    @keyframes countUp {
+        from { transform: scale(0.5); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
     }
     
     .play-again-button {
         padding: 16px 32px;
-        background: #4a90e2;
+        background: linear-gradient(45deg, #4a90e2, #357abd);
         color: white;
         border: none;
         border-radius: 12px;
         font-size: 1.1rem;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
     }
     
     .play-again-button:hover {
-        background: #357abd;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
     }
     
     @media (max-width: 640px) {
