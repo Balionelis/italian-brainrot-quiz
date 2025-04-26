@@ -4,7 +4,7 @@
     import { collection, query, where, getDocs } from 'firebase/firestore';
     import { onMount } from 'svelte';
     
-    export let onNavigate: (view: 'game' | 'leaderboard') => void;
+    export let onNavigate: (view: 'game' | 'leaderboard' | 'login') => void;
     
     let bestScore: number | null = null;
     let loading = true;
@@ -50,7 +50,7 @@
     {/if}
     
     <div class="cards-container">
-        <div class="card" on:click={() => onNavigate('game')}>
+        <div class="card" on:click={() => $user ? onNavigate('game') : onNavigate('login')}>
             <div class="card-icon">🎮</div>
             <h3>Start New Game</h3>
             <p>Match 10 brainrot characters with their names and compete for the high score!</p>
@@ -65,8 +65,12 @@
                         <p>No score yet - Be the first to set your record!</p>
                     </div>
                 {/if}
+            {:else if !$user}
+                <div class="login-required">
+                    <p>Login required to play</p>
+                </div>
             {/if}
-            <button class="primary-button">Play Now</button>
+            <button class="primary-button">{$user ? 'Play Now' : 'Login to Play'}</button>
         </div>
         
         <div class="card" on:click={() => onNavigate('leaderboard')}>
@@ -191,6 +195,19 @@
     }
     
     .no-score p {
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    
+    .login-required {
+        background: #fff3cd;
+        color: #856404;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .login-required p {
         margin: 0;
         font-size: 0.95rem;
     }
