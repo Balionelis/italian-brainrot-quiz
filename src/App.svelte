@@ -37,13 +37,18 @@
           </div>
           
           <div class="nav-links">
-                  <button class="nav-button" on:click={() => navigate('game')}>Play</button>
-                  <button class="nav-button" on:click={() => navigate('home')}>Home</button>
-                  <button class="nav-button" on:click={() => navigate('leaderboard')}>Leaderboard</button>
-                  <div class="user-menu">
-                      <span class="user-name">{$user?.displayName || 'Player'}</span>
-                      <button class="logout-button" on:click={handleLogout}>Logout</button>
-                  </div>
+            <button class="nav-button" on:click={() => navigate('game')}>Play</button>
+            <button class="nav-button" on:click={() => navigate('home')}>Home</button>
+            <button class="nav-button" on:click={() => navigate('leaderboard')}>Leaderboard</button>
+            {#if $user}
+                <div class="user-menu">
+                    <span class="user-name">{$user.displayName || 'Player'}</span>
+                    <button class="logout-button" on:click={handleLogout}>Logout</button>
+                </div>
+            {:else}
+                <button class="nav-button primary" on:click={() => navigate('login')}>Login</button>
+                <button class="nav-button secondary" on:click={() => navigate('register')}>Register</button>
+            {/if}
           </div>
       </div>
   </nav>
