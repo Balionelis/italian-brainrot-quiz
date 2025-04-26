@@ -105,7 +105,6 @@
       const answerTime = Math.floor((Date.now() - startTime) / 1000);
       
       if (selectedAnswer === gameState.questions[gameState.currentQuestion].correctAnswer) {
-        // Score calculation: Base 100 points - time penalty (2 points per second)
         const points = Math.max(100 - (answerTime * 2), 10);
         gameState.score += points;
         feedback = `Correct! +${points} points`;
@@ -129,7 +128,6 @@
     async function saveScore() {
       if ($user) {
         try {
-          // First, check if user already has a score
           const q = query(
             collection(db, 'leaderboard'),
             where('userId', '==', $user.uid)
@@ -138,12 +136,10 @@
           const querySnapshot = await getDocs(q);
           
           if (!querySnapshot.empty) {
-            // User already has a score, check if new score is better
             const existingDoc = querySnapshot.docs[0];
             const existingScore = existingDoc.data().score;
             
             if (gameState.score > existingScore) {
-              // Update with new better score
               await updateDoc(doc(db, 'leaderboard', existingDoc.id), {
                 score: gameState.score,
                 timeElapsed: gameState.timeElapsed,
@@ -151,7 +147,6 @@
               });
             }
           } else {
-            // User doesn't have a score yet, create new entry
             await addDoc(collection(db, 'leaderboard'), {
               userId: $user.uid,
               username: $user.displayName || 'Anonymous',

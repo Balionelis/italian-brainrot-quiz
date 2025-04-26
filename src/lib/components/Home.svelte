@@ -1,7 +1,40 @@
 <script lang="ts">
     import { user } from '../stores/authStore';
+    import { db } from '../firebase/firebase';
+    import { collection, query, where, getDocs } from 'firebase/firestore';
+    import { onMount } from 'svelte';
     
     export let onNavigate: (view: 'game' | 'leaderboard') => void;
+    
+    let bestScore: number | null = null;
+    let loading = true;
+    
+    async function fetchBestScore() {
+        if ($user) {
+            try {
+                const q = query(
+                    collection(db, 'leaderboard'),
+                    where('userId', '==', $user.uid)
+                );
+                
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    bestScore = doc.data().score;
+                }
+            } catch (error) {
+                console.error('Error fetching best score:', error);
+            }
+        }
+        loading = false;
+    }
+    
+    $: if ($user) {
+        fetchBestScore();
+    } else {
+        bestScore = null;
+        loading = false;
+    }
 </script>
 
 <div class="home-container">
@@ -21,6 +54,18 @@
             <div class="card-icon">🎮</div>
             <h3>Start New Game</h3>
             <p>Match 10 brainrot characters with their names and compete for the high score!</p>
+            {#if $user && !loading}
+                {#if bestScore !== null}
+                    <div class="best-score">
+                        <span class="trophy-icon">🏆</span>
+                        Your Best Score: <strong>{bestScore}</strong>
+                    </div>
+                {:else}
+                    <div class="no-score">
+                        <p>No score yet - Be the first to set your record!</p>
+                    </div>
+                {/if}
+            {/if}
             <button class="primary-button">Play Now</button>
         </div>
         
@@ -114,6 +159,40 @@
         color: #666;
         margin-bottom: 20px;
         line-height: 1.5;
+    }
+    
+    .best-score {
+        background: #e8f4fd;
+        color: #1a73e8;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .best-score strong {
+        font-weight: 700;
+    }
+    
+    .trophy-icon {
+        font-size: 1.3rem;
+    }
+    
+    .no-score {
+        background: #f8f9fa;
+        color: #6c757d;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .no-score p {
+        margin: 0;
+        font-size: 0.95rem;
     }
     
     .primary-button, .secondary-button {
