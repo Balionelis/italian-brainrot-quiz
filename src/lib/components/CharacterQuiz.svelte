@@ -3,7 +3,7 @@
     import { onMount, onDestroy } from 'svelte';
     import { user } from '../stores/authStore';
     import { db } from '../firebase/firebase';
-    import { collection, addDoc } from 'firebase/firestore';
+    import { collection, addDoc, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
     import type { Character, Question, GameState } from '../types/types';
     
     const characters: Character[] = [
@@ -129,13 +129,37 @@
     async function saveScore() {
       if ($user) {
         try {
-          await addDoc(collection(db, 'leaderboard'), {
-            userId: $user.uid,
-            username: $user.displayName || 'Anonymous',
-            score: gameState.score,
-            timeElapsed: gameState.timeElapsed,
-            timestamp: new Date()
-          });
+          // First, check if user already has a score
+          const q = query(
+            collection(db, 'leaderboard'),
+            where('userId', '==', $user.uid)
+          );
+          
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            // User already has a score, check if new score is better
+            const existingDoc = querySnapshot.docs[0];
+            const existingScore = existingDoc.data().score;
+            
+            if (gameState.score > existingScore) {
+              // Update with new better score
+              await updateDoc(doc(db, 'leaderboard', existingDoc.id), {
+                score: gameState.score,
+                timeElapsed: gameState.timeElapsed,
+                timestamp: new Date()
+              });
+            }
+          } else {
+            // User doesn't have a score yet, create new entry
+            await addDoc(collection(db, 'leaderboard'), {
+              userId: $user.uid,
+              username: $user.displayName || 'Anonymous',
+              score: gameState.score,
+              timeElapsed: gameState.timeElapsed,
+              timestamp: new Date()
+            });
+          }
         } catch (error) {
           console.error('Error saving score:', error);
         }
@@ -164,164 +188,350 @@
     onDestroy(() => {
       clearInterval(timer);
     });
-  </script>
-  
-  <div class="quiz-container">
-    <h1>Character Matching Game</h1>
-    
+</script>
+
+<div class="quiz-container">
     {#if !gameState.gameOver}
-      {#if gameState.questions.length > 0}
-        <div class="game-info">
-          <div>Question {gameState.currentQuestion + 1} of 10</div>
-          <div>Score: {gameState.score}</div>
-          <div>Time: {gameState.timeElapsed}s</div>
-        </div>
-        
-        <div class="character-image">
-          <img 
-            src="/images/{gameState.questions[gameState.currentQuestion].image}" 
-            alt="Character to identify"
-          />
-        </div>
-        
-        <div class="options">
-          {#each gameState.questions[gameState.currentQuestion].options as option}
-            <button 
-              class:selected={selectedAnswer === option}
-              class:correct={feedback.startsWith('Correct') && option === gameState.questions[gameState.currentQuestion].correctAnswer}
-              class:wrong={feedback.startsWith('Wrong') && option === selectedAnswer}
-              on:click={() => selectAnswer(option)}
-              disabled={feedback !== ''}
-            >
-              {option}
-            </button>
-          {/each}
-        </div>
-        
-        {#if !feedback}
-          <button 
-            class="submit-button" 
-            on:click={submitAnswer}
-            disabled={!selectedAnswer}
-          >
-            Submit Answer
-          </button>
+        {#if gameState.questions.length > 0}
+            <div class="game-header">
+                <div class="progress-bar">
+                    <div class="progress" style="width: {(gameState.currentQuestion / 10) * 100}%"></div>
+                </div>
+                <div class="game-stats">
+                    <div class="stat">
+                        <span class="stat-label">Question</span>
+                        <span class="stat-value">{gameState.currentQuestion + 1}/10</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Score</span>
+                        <span class="stat-value">{gameState.score}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Time</span>
+                        <span class="stat-value">{gameState.timeElapsed}s</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="question-section">
+                <h2>Who is this character?</h2>
+                <div class="character-image">
+                    <img 
+                        src="/images/{gameState.questions[gameState.currentQuestion].image}" 
+                        alt="Character to identify"
+                    />
+                </div>
+                
+                <div class="options-grid">
+                    {#each gameState.questions[gameState.currentQuestion].options as option}
+                        <button 
+                            class="option-button"
+                            class:selected={selectedAnswer === option}
+                            class:correct={feedback.startsWith('Correct') && option === gameState.questions[gameState.currentQuestion].correctAnswer}
+                            class:wrong={feedback.startsWith('Wrong') && option === selectedAnswer}
+                            on:click={() => selectAnswer(option)}
+                            disabled={feedback !== ''}
+                        >
+                            {option}
+                        </button>
+                    {/each}
+                </div>
+                
+                {#if !feedback}
+                    <button 
+                        class="submit-button" 
+                        on:click={submitAnswer}
+                        disabled={!selectedAnswer}
+                    >
+                        Submit Answer
+                    </button>
+                {/if}
+                
+                {#if feedback}
+                    <div class="feedback-message" class:correct={feedback.startsWith('Correct')}>
+                        {feedback}
+                    </div>
+                {/if}
+            </div>
+        {:else}
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Loading questions...</p>
+            </div>
         {/if}
-        
-        {#if feedback}
-          <div class="feedback" class:correct={feedback.startsWith('Correct')}>
-            {feedback}
-          </div>
-        {/if}
-      {:else}
-        <div>Loading questions...</div>
-      {/if}
     {:else}
-      <div class="game-over">
-        <h2>Game Over!</h2>
-        <p>Your final score: {gameState.score} points</p>
-        <p>Time taken: {gameState.timeElapsed} seconds</p>
-        <button on:click={restartGame}>Play Again</button>
-      </div>
+        <div class="game-over-card">
+            <h2>Game Over!</h2>
+            <div class="score-summary">
+                <div class="final-score">
+                    <span class="score-label">Final Score</span>
+                    <span class="score-value">{gameState.score}</span>
+                </div>
+                <div class="time-taken">
+                    <span class="time-label">Time Taken</span>
+                    <span class="time-value">{gameState.timeElapsed} seconds</span>
+                </div>
+            </div>
+            <button class="play-again-button" on:click={restartGame}>Play Again</button>
+        </div>
     {/if}
-  </div>
-  
-  <style>
+</div>
+
+<style>
     .quiz-container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-      text-align: center;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
     }
     
-    .game-info {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      font-weight: bold;
+    .game-header {
+        margin-bottom: 30px;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    
+    .progress {
+        height: 100%;
+        background: #4a90e2;
+        transition: width 0.3s ease;
+    }
+    
+    .game-stats {
+        display: flex;
+        justify-content: space-between;
+        background: white;
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 4px;
+    }
+    
+    .stat-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .question-section {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    h2 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
     }
     
     .character-image {
-      margin: 20px 0;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
     }
     
     .character-image img {
-      max-width: 300px;
-      max-height: 300px;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-width: 300px;
+        max-height: 300px;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     
-    .options {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin: 20px 0;
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
     }
     
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      border: 2px solid #ccc;
-      border-radius: 5px;
-      background: white;
-      cursor: pointer;
-      transition: all 0.2s;
+    .option-button {
+        padding: 16px 20px;
+        background: #f8f9fa;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        color: #2c3e50;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
     }
     
-    button:hover:not(:disabled) {
-      background: #f0f0f0;
+    .option-button:hover:not(:disabled) {
+        border-color: #4a90e2;
+        transform: translateY(-2px);
     }
     
-    button.selected {
-      border-color: #4a90e2;
-      background: #e6f0ff;
+    .option-button.selected {
+        border-color: #4a90e2;
+        background: #e6f2ff;
     }
     
-    button.correct {
-      border-color: #2ecc71;
-      background: #d5f5e3;
+    .option-button.correct {
+        border-color: #2ecc71;
+        background: #d5f5e3;
     }
     
-    button.wrong {
-      border-color: #e74c3c;
-      background: #fdecea;
+    .option-button.wrong {
+        border-color: #e74c3c;
+        background: #fdecea;
     }
     
-    button:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
+    .option-button:disabled {
+        cursor: not-allowed;
     }
     
     .submit-button {
-      background: #4a90e2;
-      color: white;
-      font-weight: bold;
-      margin-top: 10px;
+        width: 100%;
+        padding: 16px;
+        background: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
     }
     
     .submit-button:hover:not(:disabled) {
-      background: #357abd;
+        background: #357abd;
+        transform: translateY(-1px);
     }
     
-    .feedback {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #e74c3c;
+    .submit-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
     
-    .feedback.correct {
-      color: #2ecc71;
+    .feedback-message {
+        margin-top: 20px;
+        padding: 16px;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 600;
+        background: #fee2e2;
+        color: #dc2626;
     }
     
-    .game-over {
-      margin-top: 50px;
+    .feedback-message.correct {
+        background: #d1fae5;
+        color: #059669;
     }
     
-    .game-over button {
-      background: #4a90e2;
-      color: white;
-      font-weight: bold;
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
     }
-  </style>
+    
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #4a90e2;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .game-over-card {
+        background: white;
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        text-align: center;
+    }
+    
+    .game-over-card h2 {
+        font-size: 2rem;
+        color: #2c3e50;
+        margin-bottom: 30px;
+    }
+    
+    .score-summary {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-bottom: 40px;
+    }
+    
+    .final-score, .time-taken {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .score-label, .time-label {
+        font-size: 1rem;
+        color: #6b7280;
+        margin-bottom: 8px;
+    }
+    
+    .score-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #4a90e2;
+    }
+    
+    .time-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .play-again-button {
+        padding: 16px 32px;
+        background: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .play-again-button:hover {
+        background: #357abd;
+        transform: translateY(-1px);
+    }
+    
+    @media (max-width: 640px) {
+        .options-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .score-summary {
+            flex-direction: column;
+            gap: 20px;
+        }
+    }
+</style>
