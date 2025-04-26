@@ -2,11 +2,14 @@
     import { user } from './lib/stores/authStore';
     import { auth } from './lib/firebase/firebase';
     import { signOut } from 'firebase/auth';
+    import { inject } from '@vercel/analytics';
     import Home from './lib/components/Home.svelte';
     import CharacterQuiz from './lib/components/CharacterQuiz.svelte';
     import Leaderboard from './lib/components/Leaderboard.svelte';
     import Login from './lib/components/Login.svelte';
     import Register from './lib/components/Register.svelte';
+    
+    inject();
     
     let currentView: 'home' | 'login' | 'register' | 'game' | 'leaderboard' = 'home';
     
@@ -206,13 +209,6 @@
         padding: 4px 12px;
         background: #f3f4f6;
         border-radius: 25px;
-    }
-    
-    .user-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        object-fit: cover;
     }
     
     .user-name {
