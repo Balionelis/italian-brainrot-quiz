@@ -1,4 +1,3 @@
-<!-- src/lib/components/CharacterQuiz.svelte -->
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { user } from '../stores/authStore';
@@ -58,10 +57,10 @@
       questions: []
     };
     
-    let selectedAnswer: string | null = null;
     let feedback = '';
     let timer: ReturnType<typeof setInterval> | undefined;
     let startTime: number;
+    let optionsDisabled = false;
     
     function generateQuestions() {
       let availableCharacters = [...characters];
@@ -95,16 +94,13 @@
       }, 1000);
     }
     
-    function selectAnswer(answer: string) {
-      selectedAnswer = answer;
-    }
-    
-    async function submitAnswer() {
-      if (!selectedAnswer) return;
+    function handleAnswerSelection(answer: string) {
+      if (optionsDisabled) return;
       
+      optionsDisabled = true;
       const answerTime = Math.floor((Date.now() - startTime) / 1000);
       
-      if (selectedAnswer === gameState.questions[gameState.currentQuestion].correctAnswer) {
+      if (answer === gameState.questions[gameState.currentQuestion].correctAnswer) {
         const points = Math.max(100 - (answerTime * 2), 10);
         gameState.score += points;
         feedback = `Correct! +${points} points`;
@@ -115,8 +111,8 @@
       setTimeout(async () => {
         if (gameState.currentQuestion < 9) {
           gameState.currentQuestion++;
-          selectedAnswer = null;
           feedback = '';
+          optionsDisabled = false;
         } else {
           gameState.gameOver = true;
           clearInterval(timer);
@@ -170,8 +166,8 @@
         gameOver: false,
         questions: []
       };
-      selectedAnswer = null;
       feedback = '';
+      optionsDisabled = false;
       generateQuestions();
       startTimer();
     }
@@ -222,26 +218,16 @@
                     {#each gameState.questions[gameState.currentQuestion].options as option}
                         <button 
                             class="option-button"
-                            class:selected={selectedAnswer === option}
                             class:correct={feedback.startsWith('Correct') && option === gameState.questions[gameState.currentQuestion].correctAnswer}
-                            class:wrong={feedback.startsWith('Wrong') && option === selectedAnswer}
-                            on:click={() => selectAnswer(option)}
-                            disabled={feedback !== ''}
+                            class:wrong={feedback.startsWith('Wrong') && option === gameState.questions[gameState.currentQuestion].correctAnswer}
+                            class:selected-wrong={feedback.startsWith('Wrong') && option !== gameState.questions[gameState.currentQuestion].correctAnswer && feedback !== ''}
+                            on:click={() => handleAnswerSelection(option)}
+                            disabled={optionsDisabled}
                         >
                             {option}
                         </button>
                     {/each}
                 </div>
-                
-                {#if !feedback}
-                    <button 
-                        class="submit-button" 
-                        on:click={submitAnswer}
-                        disabled={!selectedAnswer}
-                    >
-                        Submit Answer
-                    </button>
-                {/if}
                 
                 {#if feedback}
                     <div class="feedback-message" class:correct={feedback.startsWith('Correct')}>
@@ -421,18 +407,6 @@
         box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
     }
     
-    .option-button.selected {
-        border-color: #4a90e2;
-        background: linear-gradient(135deg, #e6f2ff, #f0f7ff);
-        animation: pulse 0.3s ease;
-    }
-    
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(0.98); }
-        100% { transform: scale(1); }
-    }
-    
     .option-button.correct {
         border-color: #2ecc71;
         background: linear-gradient(135deg, #d5f5e3, #e8faf1);
@@ -448,6 +422,12 @@
     .option-button.wrong {
         border-color: #e74c3c;
         background: linear-gradient(135deg, #fdecea, #ffe5e3);
+        animation: correctAnswer 0.5s ease;
+    }
+    
+    .option-button.selected-wrong {
+        border-color: #e74c3c;
+        background: linear-gradient(135deg, #fdecea, #ffe5e3);
         animation: shake 0.5s ease;
     }
     
@@ -455,41 +435,6 @@
         0%, 100% { transform: translateX(0); }
         25% { transform: translateX(-10px); }
         75% { transform: translateX(10px); }
-    }
-    
-    .submit-button {
-        width: 100%;
-        padding: 16px;
-        background: linear-gradient(45deg, #4a90e2, #357abd);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .submit-button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: 0.5s;
-    }
-    
-    .submit-button:hover:not(:disabled)::before {
-        left: 100%;
-    }
-    
-    .submit-button:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
     }
     
     .feedback-message {
